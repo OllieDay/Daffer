@@ -7,193 +7,296 @@ module Tests
 
     let connection = new NpgsqlConnection ("Server=localhost; Port=5432; Database=postgres; User Id=postgres;")
 
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``execute`` value =
-        execute connection "" ["value" => value] |> ignore
+    [<Fact>]
+    let ``execute with no rows affected returns -1`` () =
+        execute connection "" []
+            |> should equal -1
 
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``executeAsync`` value =
-        async {
-            do! executeAsync connection "" ["value" => value] |> Async.Ignore
-        }
+    [<Fact>]
+    let ``execute with 1 row affected returns 1`` () =
+        let sql = """
+            create temp table x (
+                id int
+            );
 
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``executeReader`` value =
-        use reader = executeReader connection "select @value" ["value" => value]
+            insert into x (id)
+            values (1);
+
+            drop table x;
+        """
+        execute connection sql []
+            |> should equal 1
+
+    [<Fact>]
+    let ``executeAsync with no rows affected returns -1`` () =
+        executeAsync connection "" []
+            |> Async.RunSynchronously
+            |> should equal -1
+
+    [<Fact>]
+    let ``executeAsync with 1 row affected returns 1`` () =
+        let sql = """
+            create temp table x (
+                id int
+            );
+
+            insert into x (id)
+            values (1);
+
+            drop table x;
+        """
+        executeAsync connection sql []
+            |> Async.RunSynchronously
+            |> should equal 1
+
+    [<Fact>]
+    let ``executeReader returns values`` () =
+        use reader = executeReader connection "select @value" ["value" => 1]
         reader.Read () |> ignore
-        reader.[0] |> should equal value
+        reader.[0]
+            |> should equal 1
 
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``executeReaderAsync`` value =
+    [<Fact>]
+    let ``executeReaderAsync returns values`` () =
         async {
-            use! reader = executeReaderAsync connection "select @value" ["value" => value]
+            use! reader = executeReaderAsync connection "select @value" ["value" => 1]
             reader.Read () |> ignore
-            reader.[0] |> should equal value
-        }
-
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``executeScalar`` value =
-        executeScalar<int> connection "select @value" ["value" => value]
-            |> should equal value
-
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``executeScalarAsync`` value =
-        async {
-            let! result = executeScalarAsync<int> connection "select @value" ["value" => value]
-            result |> should equal value
-        }
-
-    [<Theory>]
-    [<InlineData (1, 2)>]
-    [<InlineData (3, 4)>]
-    [<InlineData (5, 6)>]
-    let ``query`` a b =
-        let sql = """
-            select @a as x
-            union
-            select @b as x
-            order by x"""
-        let parameters = ["a" => a; "b" => b]
-        query<int> connection sql parameters
-            |> should equal [a; b]
-
-    [<Theory>]
-    [<InlineData (1, 2)>]
-    [<InlineData (3, 4)>]
-    [<InlineData (5, 6)>]
-    let ``queryAsync`` a b =
-        async {
-            let sql = """
-                select @a as x
-                union
-                select @b as x
-                order by x"""
-            let parameters = ["a" => a; "b" => b]
-            let! result = queryAsync<int> connection sql parameters
-            result |> should equal [a; b]
-        }
-
-    [<Theory>]
-    [<InlineData (1, 2)>]
-    [<InlineData (3, 4)>]
-    [<InlineData (5, 6)>]
-    let ``queryFirst`` a b =
-        let sql = """
-            select @a as x
-            union
-            select @b as x
-            order by x"""
-        let parameters = ["a" => a; "b" => b]
-        queryFirst<int> connection sql parameters
-            |> should equal a
-
-    [<Theory>]
-    [<InlineData (1, 2)>]
-    [<InlineData (3, 4)>]
-    [<InlineData (5, 6)>]
-    let ``queryFirstAsync`` a b =
-        async {
-            let sql = """
-                select @a as x
-                union
-                select @b as x
-                order by x"""
-            let parameters = ["a" => a; "b" => b]
-            let! result = queryFirstAsync<int> connection sql parameters
-            result |> should equal a
+            reader.[0]
+                |> should equal 1
         }
 
     [<Fact>]
-    let ``queryFirstOrDefault`` () =
-        queryFirstOrDefault<int> connection "select null limit 0" []
+    let ``executeScalar with no results returns 0`` () =
+        executeScalar<int> connection "select null limit 0" []
             |> should equal 0
 
     [<Fact>]
-    let ``queryFirstOrDefaultAsync`` () =
-        async {
-            let! result = queryFirstOrDefaultAsync<int> connection "select null limit 0" []
-            result |> should equal 0
-        }
+    let ``executeScalar with 1 result returns value`` () =
+        executeScalar<int> connection "select @value" ["value" => 1]
+            |> should equal 1
 
-    [<Theory>]
-    [<InlineData (1, 2)>]
-    [<InlineData (3, 4)>]
-    [<InlineData (5, 6)>]
-    let ``queryMultiple`` a b =
-        let reader = queryMultiple connection "select @a; select @b" ["a" => a; "b" => b]
+    [<Fact>]
+    let ``executeScalarAsync with no results returns 0`` () =
+        executeScalarAsync<int> connection "select null limit 0" []
+            |> Async.RunSynchronously
+            |> should equal 0
+
+    [<Fact>]
+    let ``executeScalarAsync with 1 result returns value`` () =
+        executeScalarAsync<int> connection "select @value" ["value" => 1]
+            |> Async.RunSynchronously
+            |> should equal 1
+
+    [<Fact>]
+    let ``query with no results returns empty list`` () =
+        query<int> connection "select null limit 0" []
+            |> should equal List.empty<int>
+
+    [<Fact>]
+    let ``query with 2 rows returns values`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x"""
+        query<int> connection sql ["a" => 1; "b" => 2]
+            |> should equal [1; 2]
+
+    [<Fact>]
+    let ``queryAsync with no results returns empty list`` () =
+        queryAsync<int> connection "select null limit 0" []
+            |> Async.RunSynchronously
+            |> should equal List.empty<int>
+
+    [<Fact>]
+    let ``queryAsync with 2 rows returns values`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x"""
+        queryAsync<int> connection sql ["a" => 1; "b" => 2]
+            |> Async.RunSynchronously
+            |> should equal [1; 2]
+
+    [<Fact>]
+    let ``queryFirst with no results throws exception`` () =
+        (fun () ->
+            queryFirst<int> connection "select null limit 0" [] |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``queryFirst with 1 row returns value`` () =
+        queryFirst<int> connection "select @value" ["value" => 1]
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryFirst with 2 rows returns first value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x"""
+        queryFirst<int> connection sql ["a" => 1; "b" => 2]
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryFirstAsync with no results throws exception`` () =
+        (fun () ->
+            queryFirstAsync<int> connection "select null limit 0" []
+                |> Async.RunSynchronously |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``queryFirstAsync with 1 row returns value`` () =
+        queryFirstAsync<int> connection "select @value" ["value" => 1]
+            |> Async.RunSynchronously
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryFirstAsync with 2 rows returns first value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x"""
+        queryFirstAsync<int> connection sql  ["a" => 1; "b" => 2]
+            |> Async.RunSynchronously
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryFirstOrDefault with no results returns default value`` () =
+        queryFirstOrDefault<int> connection "select null limit 0" []
+            |> should equal Unchecked.defaultof<int>
+
+    [<Fact>]
+    let ``queryFirstOrDefault with 1 row returns value`` () =
+        queryFirstOrDefault<int> connection "select @value" ["value" => 1]
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryFirstOrDefault with 2 rows returns first value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        queryFirstOrDefault<int> connection sql ["a" => 1; "b" => 2]
+            |> should equal 1
+
+    [<Fact>]
+
+    let ``queryFirstOrDefaultAsync with no results returns default value`` () =
+        queryFirstOrDefaultAsync<int> connection "select null limit 0" []
+            |> Async.RunSynchronously
+            |> should equal Unchecked.defaultof<int>
+
+    [<Fact>]
+    let ``queryFirstOrDefaultAsync with 1 row returns value`` () =
+        queryFirstOrDefaultAsync<int> connection "select @value" ["value" => 1]
+            |> Async.RunSynchronously
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryFirstOrDefaultAsync with 2 rows returns first value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        queryFirstOrDefaultAsync<int> connection sql ["a" => 1; "b" => 2]
+            |> Async.RunSynchronously
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryMultiple returns reader with multiple values`` () =
+        let reader = queryMultiple connection "select @a; select @b" ["a" => 1; "b" => 2]
         reader.Read<int> ()
             |> Seq.exactlyOne
-            |> should equal a
+            |> should equal 1
         reader.Read<int> ()
             |> Seq.exactlyOne
-            |> should equal b
+            |> should equal 2
 
-
-    [<Theory>]
-    [<InlineData (1, 2)>]
-    [<InlineData (3, 4)>]
-    [<InlineData (5, 6)>]
-    let ``queryMultipleAsync`` a b =
+    [<Fact>]
+    let ``queryMultipleAsync returns reader with multiple values`` () =
         async {
-            let! reader = queryMultipleAsync connection "select @a; select @b" ["a" => a; "b" => b]
+            let! reader = queryMultipleAsync connection "select @a; select @b" ["a" => 1; "b" => 2]
             reader.Read<int> ()
                 |> Seq.exactlyOne
-                |> should equal a
+                |> should equal 1
             reader.Read<int> ()
                 |> Seq.exactlyOne
-                |> should equal b
+                |> should equal 2
         }
 
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``querySingle`` value =
-        querySingle<int> connection "select @value" ["value" => value]
-            |> should equal value
+    [<Fact>]
+    let ``querySingle with no results throws exception`` () =
+        (fun () ->
+            querySingle<int> connection "select null limit 0" [] |> ignore
+        ) |> shouldFail
 
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``querySingleAsync`` value =
-        async {
-            let! result = querySingleAsync<int> connection "select @value" ["value" => value]
-            result |> should equal value
-        }
+    [<Fact>]
+    let ``querySingle with 1 row returns value`` () =
+        querySingle<int> connection "select @value" ["value" => 1]
+            |> should equal 1
 
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``querySingleOrDefault`` value =
-        querySingleOrDefault<int> connection "select @value" ["value" => value]
-            |> should equal value
+    [<Fact>]
+    let ``querySingle with 2 rows throws exception`` () =
+        (fun () ->
+            let sql = """
+                select @a
+                union
+                select @b
+            """
+            querySingle<int> connection sql ["a" => 1; "b" => 2] |> ignore
+        ) |> shouldFail
 
-    [<Theory>]
-    [<InlineData 1>]
-    [<InlineData 2>]
-    [<InlineData 3>]
-    let ``querySingleOrDefaultAsync`` value =
-        async {
-            let! result = querySingleOrDefaultAsync<int> connection "select @value" ["value" => value]
-            result |> should equal value
-        }
+    [<Fact>]
+    let ``querySingleAsync with no results throws exception`` () =
+        (fun () ->
+            querySingleAsync<int> connection "select null limit 0" []
+                |> Async.RunSynchronously |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``querySingleAsync with 1 row returns value`` () =
+        querySingleAsync<int> connection "select @value" ["value" => 1]
+            |> Async.RunSynchronously
+            |> should equal 1
+
+    [<Fact>]
+    let ``querySingleAsync with 2 rows throws exception`` () =
+        (fun () ->
+            let sql = """
+                select @a
+                union
+                select @b
+            """
+            querySingleAsync<int> connection sql ["a" => 1; "b" => 2]
+                |> Async.RunSynchronously |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``querySingleOrDefault with no results returns default value`` () =
+        querySingleOrDefault<int> connection "select null limit 0" []
+            |> should equal Unchecked.defaultof<int>
+
+    [<Fact>]
+    let ``querySingleOrDefault with 1 row returns value`` () =
+        querySingleOrDefault<int> connection "select @value" ["value" => 1]
+            |> should equal 1
+
+    [<Fact>]
+    let ``querySingleOrDefaultAsync with 2 rows throws exception`` () =
+        (fun () ->
+            let sql = """
+                select @a
+                union
+                select @b
+            """
+            querySingleOrDefaultAsync<int> connection sql ["a" => 1; "b" => 2]
+                |> Async.RunSynchronously |> ignore
+        ) |> shouldFail
