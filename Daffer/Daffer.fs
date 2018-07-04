@@ -4,6 +4,7 @@ namespace Daffer
     module Core =
 
         open Dapper
+        open System
         open System.Data
 
         type Parameter = string * obj
@@ -82,4 +83,39 @@ namespace Daffer
         let querySingleOrDefaultAsync<'T> (connection : IDbConnection) sql (parameters : Parameter list) =
             async {
                 return! connection.QuerySingleOrDefaultAsync<'T> (sql, dict parameters) |> Async.AwaitTask
+            }
+
+        let private firstMaybe = function
+            | [] -> None
+            | x :: _ -> Some x
+
+        let queryFirstMaybe<'T when 'T : equality> (connection : IDbConnection) sql (parameters : Parameter list) =
+            connection.Query<'T> (sql, dict parameters)
+                |> List.ofSeq
+                |> firstMaybe
+
+        let queryFirstMaybeAsync<'T when 'T : equality> (connection : IDbConnection) sql (parameters : Parameter list) =
+            async {
+                let! result = connection.QueryAsync<'T> (sql, dict parameters) |> Async.AwaitTask
+                return result
+                    |> List.ofSeq
+                    |> firstMaybe
+            }
+
+        let private singleMaybe = function
+            | [] -> None
+            | [x] -> Some x
+            | _ -> InvalidOperationException "Sequence contains more than one element" |> raise
+
+        let querySingleMaybe<'T when 'T : equality> (connection : IDbConnection) sql (parameters : Parameter list) =
+            connection.Query<'T> (sql, dict parameters)
+                |> List.ofSeq
+                |> singleMaybe
+
+        let querySingleMaybeAsync<'T when 'T : equality> (connection : IDbConnection) sql (parameters : Parameter list) =
+            async {
+                let! result = connection.QueryAsync<'T> (sql, dict parameters) |> Async.AwaitTask
+                return result
+                    |> List.ofSeq
+                    |> singleMaybe
             }

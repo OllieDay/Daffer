@@ -300,3 +300,96 @@ module Tests
             querySingleOrDefaultAsync<int> connection sql ["a" => 1; "b" => 2]
                 |> Async.RunSynchronously |> ignore
         ) |> shouldFail
+
+    [<Fact>]
+    let ``queryFirstMaybe with no results returns None`` () =
+        queryFirstMaybe<int> connection "select null limit 0" []
+            |> should equal None
+
+    [<Fact>]
+    let ``queryFirstMaybe with 1 row returns Some value`` () =
+        queryFirstMaybe<int> connection "select @value" ["value" => 1]
+            |> should equal (Some 1)
+
+    [<Fact>]
+    let ``queryFirstMaybe with 2 rows returns first Some value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        queryFirstMaybe<int> connection sql ["a" => 1; "b" => 2]
+            |> should equal (Some 1)
+
+    [<Fact>]
+    let ``queryFirstMaybeAsync with no results returns None`` () =
+        queryFirstMaybeAsync<int> connection "select null limit 0" []
+            |> Async.RunSynchronously
+            |> should equal None
+
+    [<Fact>]
+    let ``queryFirstMaybeAsync with 1 row returns Some value`` () =
+        queryFirstMaybeAsync<int> connection "select @value" ["value" => 1]
+            |> Async.RunSynchronously
+            |> should equal (Some 1)
+
+    [<Fact>]
+    let ``queryFirstMaybeAsync with 2 rows returns first Some value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        queryFirstMaybeAsync<int> connection sql ["a" => 1; "b" => 2]
+            |> Async.RunSynchronously
+            |> should equal (Some 1)
+
+    [<Fact>]
+    let ``querySingleMaybe with no results returns None`` () =
+        querySingleMaybe<int> connection "select null limit 0" []
+            |> should equal None
+
+    [<Fact>]
+    let ``querySingleMaybe with 1 row returns Some value`` () =
+        querySingleMaybe<int> connection "select @value" ["value" => 1]
+            |> should equal (Some 1)
+
+    [<Fact>]
+    let ``querySingleMaybe with 2 rows throws exception`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        (fun () ->
+            querySingleMaybe<int> connection sql ["a" => 1; "b" => 2] |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``querySingleMaybeAsync with no results returns None`` () =
+        querySingleMaybeAsync<int> connection "select null limit 0" []
+            |> Async.RunSynchronously
+            |> should equal None
+
+    [<Fact>]
+    let ``querySingleMaybeAsync with 1 row returns Some value`` () =
+        querySingleMaybeAsync<int> connection "select @value" ["value" => 1]
+            |> Async.RunSynchronously
+            |> should equal (Some 1)
+
+    [<Fact>]
+    let ``querySingleMaybeAsync with 2 rows throws exception`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        (fun () ->
+            querySingleMaybeAsync<int> connection sql ["a" => 1; "b" => 2]
+            |> Async.RunSynchronously
+            |> ignore
+        ) |> shouldFail

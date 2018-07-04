@@ -6,6 +6,7 @@ Functional wrapper for Dapper.
 - Makes passing parameters less noisy using `["name" => value]`
 - Converts `IEnumerable<'T>` to `'T list`
 - Converts `Task<'T>` to `Async<'T>`
+- Provides alternatives to `QueryFirstOrDefault<'T>` and `QuerySingleOrDefault<'T>` that returns `'T option`
 
 ## Getting started
 
@@ -54,4 +55,8 @@ querySingle<'T>               : IDbConnection -> string -> Parameter list -> 'T
 querySingleAsync<'T>          : IDbConnection -> string -> Parameter list -> Async<'T>
 querySingleOrDefault<'T>      : IDbConnection -> string -> Parameter list -> 'T
 querySingleOrDefaultAsync<'T> : IDbConnection -> string -> Parameter list -> Async<'T>
+queryFirstMaybe<'T>           : IDbConnection -> string -> Parameter list -> 'T option
+queryFirstMaybeAsync<'T>      : IDbConnection -> string -> Parameter list -> Async<'T option>
+querySingleMaybe<'T>          : IDbConnection -> string -> Parameter list -> 'T option
+querySingleMaybeAsync<'T>     : IDbConnection -> string -> Parameter list -> Async<'T option>
 ```
