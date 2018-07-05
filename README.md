@@ -7,6 +7,7 @@ Functional wrapper for Dapper.
 - Converts `IEnumerable<'T>` to `'T list`
 - Converts `Task<'T>` to `Async<'T>`
 - Provides alternatives to `QueryFirstOrDefault<'T>` and `QuerySingleOrDefault<'T>` that returns `'T option`
+- Handles conversion of primitives to and from `'T option`
 
 ## Getting started
 
@@ -30,12 +31,49 @@ dotnet add package Daffer
 let user = query<User> connection "SELECT * FROM Users WHERE Id = @Id" ["Id" => 1]
 ```
 
+### Maybe functions
+
+Functions returning `null` have a counterpart that returns `'T option` instead.
+
+| `null`                          |         `'T option`         |
+| --------------------------------|---------------------------- |
+| `queryFirstOrDefault<'T>`       | `queryFirstMaybe<'T>`       |
+| `queryFirstOrDefaultAsync<'T>`  | `queryFirstMaybeAsync<'T>`  |
+| `querySingleOrDefault<'T>`      | `querySingleMaybe<'T>`      |
+| `querySingleOrDefaultAsync<'T>` | `querySingleMaybeAsync<'T>` |
+
+### Converting primitives to and from `'T option`
+
+The following primitive types can be automatically converted to and from `'T option` by calling `addOptionHandlers`
+on application initialization.
+
+- `bool`
+- `byte`
+- `sbyte`
+- `char`
+- `single`
+- `double`
+- `decimal`
+- `int8`
+- `uint8`
+- `int16`
+- `uint16`
+- `int32`
+- `uint32`
+- `int64`
+- `uint64`
+- `string`
+- `Guid`
+- `DateTime`
+
 ## Definitions
 
 ```fsharp
 type Parameter = string * obj
 
 (=>)                          : string -> obj -> Parameter
+
+addOptionHandlers             : unit -> unit
 
 execute                       : IDbConnection -> string -> Parameter list -> int
 executeAsync                  : IDbConnection -> string -> Parameter list -> Async<int>

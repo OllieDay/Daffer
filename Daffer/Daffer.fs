@@ -7,10 +7,50 @@ namespace Daffer
         open System
         open System.Data
 
+        type private OptionHandler<'T> () =
+            inherit SqlMapper.TypeHandler<'T option> ()
+
+            let isDbNull value =
+                isNull value || value = box DBNull.Value
+
+            override __.SetValue (param, value) =
+                param.Value <-
+                    match value with
+                    | Some x -> box x
+                    | None -> null
+
+            override __.Parse value =
+                match isDbNull value with
+                | true -> None
+                | false -> Some (value :?> 'T)
+
         type Parameter = string * obj
 
         let (=>) (name : string) (value : obj) =
             (name, value)
+
+        let private addOptionHandler<'T> () =
+            SqlMapper.AddTypeHandler (OptionHandler<'T> ())
+
+        let addOptionHandlers () =
+            addOptionHandler<bool> ()
+            addOptionHandler<byte> ()
+            addOptionHandler<sbyte> ()
+            addOptionHandler<char> ()
+            addOptionHandler<single> ()
+            addOptionHandler<double> ()
+            addOptionHandler<decimal> ()
+            addOptionHandler<int8> ()
+            addOptionHandler<uint8> ()
+            addOptionHandler<int16> ()
+            addOptionHandler<uint16> ()
+            addOptionHandler<int32> ()
+            addOptionHandler<uint32> ()
+            addOptionHandler<int64> ()
+            addOptionHandler<uint64> ()
+            addOptionHandler<string> ()
+            addOptionHandler<Guid> ()
+            addOptionHandler<DateTime> ()
 
         let execute (connection : IDbConnection) sql (parameters : Parameter list) =
             connection.Execute (sql, dict parameters)

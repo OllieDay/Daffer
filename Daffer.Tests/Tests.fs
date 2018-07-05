@@ -393,3 +393,27 @@ module Tests
             |> Async.RunSynchronously
             |> ignore
         ) |> shouldFail
+
+    [<Fact>]
+    let ``converts None to null`` () =
+        addOptionHandlers ()
+        querySingle<string> connection "select @value" ["value" => None]
+            |> should equal null
+
+    [<Fact>]
+    let ``converts Some "x" to 'x'`` () =
+        addOptionHandlers ()
+        querySingle<string> connection "select @value" ["value" => Some "x"]
+            |> should equal "x"
+
+    [<Fact>]
+    let ``converts null to None`` () =
+        addOptionHandlers ()
+        querySingle<string option> connection "select null" []
+            |> should equal None
+
+    [<Fact>]
+    let ``converts 'x' to Some "x"`` () =
+        addOptionHandlers ()
+        querySingle<string option> connection "select 'x'" []
+            |> should equal (Some "x")
