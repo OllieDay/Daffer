@@ -89,12 +89,12 @@ namespace Daffer
             | [] -> None
             | x :: _ -> Some x
 
-        let queryFirstMaybe<'T when 'T : equality> (connection : IDbConnection) sql (parameters : Parameter list) =
+        let queryFirstMaybe<'T> (connection : IDbConnection) sql (parameters : Parameter list) =
             connection.Query<'T> (sql, dict parameters)
                 |> List.ofSeq
                 |> firstMaybe
 
-        let queryFirstMaybeAsync<'T when 'T : equality> (connection : IDbConnection) sql (parameters : Parameter list) =
+        let queryFirstMaybeAsync<'T> (connection : IDbConnection) sql (parameters : Parameter list) =
             async {
                 let! result = connection.QueryAsync<'T> (sql, dict parameters) |> Async.AwaitTask
                 return result
@@ -107,12 +107,12 @@ namespace Daffer
             | [x] -> Some x
             | _ -> InvalidOperationException "Sequence contains more than one element" |> raise
 
-        let querySingleMaybe<'T when 'T : equality> (connection : IDbConnection) sql (parameters : Parameter list) =
+        let querySingleMaybe<'T> (connection : IDbConnection) sql (parameters : Parameter list) =
             connection.Query<'T> (sql, dict parameters)
                 |> List.ofSeq
                 |> singleMaybe
 
-        let querySingleMaybeAsync<'T when 'T : equality> (connection : IDbConnection) sql (parameters : Parameter list) =
+        let querySingleMaybeAsync<'T> (connection : IDbConnection) sql (parameters : Parameter list) =
             async {
                 let! result = connection.QueryAsync<'T> (sql, dict parameters) |> Async.AwaitTask
                 return result
