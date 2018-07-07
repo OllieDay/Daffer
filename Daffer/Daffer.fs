@@ -1,30 +1,31 @@
 namespace Daffer
 
+    open Dapper
+    open System
+
+    type private OptionHandler<'T> () =
+        inherit SqlMapper.TypeHandler<'T option> ()
+
+        let isDbNull value =
+            isNull value || value = box DBNull.Value
+
+        override __.SetValue (param, value) =
+            param.Value <-
+                match value with
+                | Some x -> box x
+                | None -> null
+
+        override __.Parse value =
+            match isDbNull value with
+            | true -> None
+            | false -> Some (value :?> 'T)
+
+    type Parameter = string * obj
+
     [<AutoOpen>]
     module Core =
 
-        open Dapper
-        open System
         open System.Data
-
-        type private OptionHandler<'T> () =
-            inherit SqlMapper.TypeHandler<'T option> ()
-
-            let isDbNull value =
-                isNull value || value = box DBNull.Value
-
-            override __.SetValue (param, value) =
-                param.Value <-
-                    match value with
-                    | Some x -> box x
-                    | None -> null
-
-            override __.Parse value =
-                match isDbNull value with
-                | true -> None
-                | false -> Some (value :?> 'T)
-
-        type Parameter = string * obj
 
         let (=>) (name : string) (value : obj) =
             (name, value)

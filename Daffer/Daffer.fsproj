@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>Ollie Day</Authors>
     <Title>Daffer</Title>
     <Description>Functional wrapper for Dapper.</Description>
