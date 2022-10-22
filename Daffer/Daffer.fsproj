@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.6</TargetFramework>
-    <Version>1.0.2</Version>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Version>1.0.3</Version>
     <Authors>Ollie Day</Authors>
     <Title>Daffer</Title>
     <Description>Functional wrapper for Dapper.</Description>
-    <Copyright>Copyright 2018 (c) Ollie Day</Copyright>
+    <Copyright>Copyright 2018, 2022 (c) Ollie Day</Copyright>
     <PackageTags>F#;Dapper;SQL</PackageTags>
     <PackageLicenseUrl>https://github.com/OllieDay/Daffer/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/OllieDay/Daffer</PackageProjectUrl>
@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="1.50.5" />
+    <PackageReference Include="Dapper" Version="2.0.123" />
   </ItemGroup>
 
 </Project>

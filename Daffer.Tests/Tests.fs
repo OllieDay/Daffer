@@ -5,7 +5,8 @@ module Tests
     open Npgsql
     open Xunit
 
-    let connection = new NpgsqlConnection ("Server=localhost; Port=5432; Database=postgres; User Id=postgres;")
+    let connectionString = "Server=localhost; Port=5432; Database=postgres; User Id=postgres; Password=password"
+    let connection = new NpgsqlConnection (connectionString)
 
     [<Fact>]
     let ``execute with no rows affected returns -1`` () =
@@ -417,3 +418,61 @@ module Tests
         addOptionHandlers ()
         querySingle<string option> connection "select 'x'" []
             |> should equal (Some "x")
+
+    [<Fact>]
+    let ``committed transaction returns 1`` () =
+        let sql = """
+            create table if not exists x (
+                id int
+            );
+
+            delete from x;
+        """
+        execute connection sql [] |> ignore
+        connection.Open ()
+        use transaction = connection.BeginTransaction ()
+        let sql = """
+            insert into x (id)
+            values (1);
+        """
+        Builder.create ()
+            |> Builder.addTransaction transaction
+            |> Builder.execute connection sql []
+            |> ignore
+        transaction.Commit ()
+        connection.Close ()
+        let sql = """
+            select count (1)
+            from x;
+        """
+        executeScalar<int> connection sql []
+            |> should equal 1
+
+    [<Fact>]
+    let ``rolled back transaction returns 0`` () =
+        let sql = """
+            create table if not exists x (
+                id int
+            );
+
+            delete from x;
+        """
+        execute connection sql [] |> ignore
+        connection.Open ()
+        use transaction = connection.BeginTransaction ()
+        let sql = """
+            insert into x (id)
+            values (1);
+        """
+        Builder.create ()
+            |> Builder.addTransaction transaction
+            |> Builder.execute connection sql []
+            |> ignore
+        transaction.Rollback ()
+        connection.Close ()
+        let sql = """
+            select count (1)
+            from x;
+        """
+        executeScalar<int> connection sql []
+            |> should equal 0

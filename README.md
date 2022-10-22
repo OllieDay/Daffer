@@ -13,7 +13,7 @@ Functional wrapper for Dapper.
 
 Install the NuGet package into your application.
 
-### Package Manager
+### Package manager
 
 ```shell
 Install-Package Daffer
@@ -66,6 +66,25 @@ on application initialization.
 - `Guid`
 - `DateTime`
 
+### Optional arguments
+
+The `Builder` module can be used for calling the underlying Dapper methods with optional arguments such as:
+
+- `transaction`
+- `commandTimeout`
+- `commandType`
+- `buffered`
+
+```fsharp
+let user =
+    Builder.create ()
+        |> Builder.addTransaction transaction
+        |> Builder.addCommandTimeout 1000
+        |> Builder.addCommandType CommandType.StoredProcedure
+        |> Builder.addBuffered false
+        |> Builder.query<User> connection "SELECT * FROM Users WHERE Id = @Id" ["id" => 1]
+```
+
 ## Definitions
 
 ```fsharp
@@ -97,4 +116,45 @@ queryFirstMaybe<'T>           : IDbConnection -> string -> Parameter list -> 'T 
 queryFirstMaybeAsync<'T>      : IDbConnection -> string -> Parameter list -> Async<'T option>
 querySingleMaybe<'T>          : IDbConnection -> string -> Parameter list -> 'T option
 querySingleMaybeAsync<'T>     : IDbConnection -> string -> Parameter list -> Async<'T option>
+```
+
+## Builder definitions
+
+```fsharp
+type Build = {
+    Transaction : IDbTransaction option
+    CommandTimeout : int option
+    CommandType : CommandType option
+    Buffered : bool option
+}
+
+create                        : unit -> Build
+
+addTransaction                : IDbTransaction -> Build -> Build
+addCommandTimeout             : int -> Build -> Build
+addCommandType                : CommandType -> Build -> Build
+addBuffered                   : bool -> Build -> Build
+
+execute                       : IDbConnection -> string -> Parameter list -> Build -> int
+executeAsync                  : IDbConnection -> string -> Parameter list -> Build -> Async<int>
+executeReader                 : IDbConnection -> string -> Parameter list -> Build -> IDataReader
+executeReaderAsync            : IDbConnection -> string -> Parameter list -> Build -> Async<IDataReader>
+executeScalar<'T>             : IDbConnection -> string -> Parameter list -> Build -> 'T
+executeScalarAsync<'T>        : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+query<'T>                     : IDbConnection -> string -> Parameter list -> Build -> 'T list
+queryAsync<'T>                : IDbConnection -> string -> Parameter list -> Build -> Async<'T list>
+queryFirst<'T>                : IDbConnection -> string -> Parameter list -> Build -> 'T
+queryFirstAsync<'T>           : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+queryFirstOrDefault<'T>       : IDbConnection -> string -> Parameter list -> Build -> 'T
+queryFirstOrDefaultAsync<'T>  : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+queryMultiple                 : IDbConnection -> string -> Parameter list -> Build -> SqlMapper.GridReader
+queryMultipleAsync            : IDbConnection -> string -> Parameter list -> Build -> Async<SqlMapper.GridReader>
+querySingle<'T>               : IDbConnection -> string -> Parameter list -> Build -> 'T
+querySingleAsync<'T>          : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+querySingleOrDefault<'T>      : IDbConnection -> string -> Parameter list -> Build -> 'T
+querySingleOrDefaultAsync<'T> : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+queryFirstMaybe<'T>           : IDbConnection -> string -> Parameter list -> Build -> 'T option
+queryFirstMaybeAsync<'T>      : IDbConnection -> string -> Parameter list -> Build -> Async<'T option>
+querySingleMaybe<'T>          : IDbConnection -> string -> Parameter list -> Build -> 'T option
+querySingleMaybeAsync<'T>     : IDbConnection -> string -> Parameter list -> Build -> Async<'T option>
 ```
