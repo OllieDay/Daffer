@@ -211,8 +211,6 @@ namespace Daffer
     [<AutoOpen>]
     module Core =
 
-        open System.Data
-
         let (=>) (name : string) (value : obj) =
             (name, value)
 
