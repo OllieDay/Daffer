@@ -51,6 +51,26 @@ module Tests
             |> should equal 1
 
     [<Fact>]
+    let ``executeTask with no rows affected returns -1`` () =
+        (executeTask connection "" []).Result
+            |> should equal -1
+
+    [<Fact>]
+    let ``executeTask with 1 row affected returns 1`` () =
+        let sql = """
+            create temp table x (
+                id int
+            );
+
+            insert into x (id)
+            values (1);
+
+            drop table x;
+        """
+        (executeTask connection sql []).Result
+            |> should equal 1
+
+    [<Fact>]
     let ``executeReader returns values`` () =
         use reader = executeReader connection "select @value" ["value" => 1]
         reader.Read () |> ignore
@@ -61,6 +81,15 @@ module Tests
     let ``executeReaderAsync returns values`` () =
         async {
             use! reader = executeReaderAsync connection "select @value" ["value" => 1]
+            reader.Read () |> ignore
+            reader.[0]
+                |> should equal 1
+        }
+
+    [<Fact>]
+    let ``executeReaderTask returns values`` () =
+        task {
+            use! reader = executeReaderTask connection "select @value" ["value" => 1]
             reader.Read () |> ignore
             reader.[0]
                 |> should equal 1
@@ -86,6 +115,16 @@ module Tests
     let ``executeScalarAsync with 1 result returns value`` () =
         executeScalarAsync<int> connection "select @value" ["value" => 1]
             |> Async.RunSynchronously
+            |> should equal 1
+
+    [<Fact>]
+    let ``executeScalarTask with no results returns 0`` () =
+        (executeScalarTask<int> connection "select null limit 0" []).Result
+            |> should equal 0
+
+    [<Fact>]
+    let ``executeScalarTask with 1 result returns value`` () =
+        (executeScalarTask<int> connection "select @value" ["value" => 1]).Result
             |> should equal 1
 
     [<Fact>]
@@ -118,6 +157,21 @@ module Tests
             order by x"""
         queryAsync<int> connection sql ["a" => 1; "b" => 2]
             |> Async.RunSynchronously
+            |> should equal [1; 2]
+
+    [<Fact>]
+    let ``queryTask with no results returns empty list`` () =
+        (queryTask<int> connection "select null limit 0" []).Result
+            |> should equal List.empty<int>
+
+    [<Fact>]
+    let ``queryTask with 2 rows returns values`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x"""
+        (queryTask<int> connection sql ["a" => 1; "b" => 2]).Result
             |> should equal [1; 2]
 
     [<Fact>]
@@ -166,6 +220,28 @@ module Tests
             |> should equal 1
 
     [<Fact>]
+    let ``queryFirstTask with no results throws exception`` () =
+        (fun () ->
+            (queryFirstTask<int> connection "select null limit 0" []).Result
+                |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``queryFirstTask with 1 row returns value`` () =
+        (queryFirstTask<int> connection "select @value" ["value" => 1]).Result
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryFirstTask with 2 rows returns first value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x"""
+        (queryFirstTask<int> connection sql  ["a" => 1; "b" => 2]).Result
+            |> should equal 1
+
+    [<Fact>]
     let ``queryFirstOrDefault with no results returns default value`` () =
         queryFirstOrDefault<int> connection "select null limit 0" []
             |> should equal Unchecked.defaultof<int>
@@ -187,7 +263,6 @@ module Tests
             |> should equal 1
 
     [<Fact>]
-
     let ``queryFirstOrDefaultAsync with no results returns default value`` () =
         queryFirstOrDefaultAsync<int> connection "select null limit 0" []
             |> Async.RunSynchronously
@@ -212,6 +287,27 @@ module Tests
             |> should equal 1
 
     [<Fact>]
+    let ``queryFirstOrDefaultTask with no results returns default value`` () =
+        (queryFirstOrDefaultTask<int> connection "select null limit 0" []).Result
+            |> should equal Unchecked.defaultof<int>
+
+    [<Fact>]
+    let ``queryFirstOrDefaultTask with 1 row returns value`` () =
+        (queryFirstOrDefaultTask<int> connection "select @value" ["value" => 1]).Result
+            |> should equal 1
+
+    [<Fact>]
+    let ``queryFirstOrDefaultTask with 2 rows returns first value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        (queryFirstOrDefaultTask<int> connection sql ["a" => 1; "b" => 2]).Result
+            |> should equal 1
+
+    [<Fact>]
     let ``queryMultiple returns reader with multiple values`` () =
         let reader = queryMultiple connection "select @a; select @b" ["a" => 1; "b" => 2]
         reader.Read<int> ()
@@ -224,7 +320,19 @@ module Tests
     [<Fact>]
     let ``queryMultipleAsync returns reader with multiple values`` () =
         async {
-            let! reader = queryMultipleAsync connection "select @a; select @b" ["a" => 1; "b" => 2]
+            use! reader = queryMultipleAsync connection "select @a; select @b" ["a" => 1; "b" => 2]
+            reader.Read<int> ()
+                |> Seq.exactlyOne
+                |> should equal 1
+            reader.Read<int> ()
+                |> Seq.exactlyOne
+                |> should equal 2
+        }
+
+    [<Fact>]
+    let ``queryMultipleTask returns reader with multiple values`` () =
+        task {
+            use! reader = queryMultipleTask connection "select @a; select @b" ["a" => 1; "b" => 2]
             reader.Read<int> ()
                 |> Seq.exactlyOne
                 |> should equal 1
@@ -281,6 +389,30 @@ module Tests
         ) |> shouldFail
 
     [<Fact>]
+    let ``querySingleTask with no results throws exception`` () =
+        (fun () ->
+            (querySingleTask<int> connection "select null limit 0" []).Result
+                |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``querySingleTask with 1 row returns value`` () =
+        (querySingleTask<int> connection "select @value" ["value" => 1]).Result
+            |> should equal 1
+
+    [<Fact>]
+    let ``querySingleTask with 2 rows throws exception`` () =
+        (fun () ->
+            let sql = """
+                select @a
+                union
+                select @b
+            """
+            (querySingleTask<int> connection sql ["a" => 1; "b" => 2]).Result
+                |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
     let ``querySingleOrDefault with no results returns default value`` () =
         querySingleOrDefault<int> connection "select null limit 0" []
             |> should equal Unchecked.defaultof<int>
@@ -300,6 +432,18 @@ module Tests
             """
             querySingleOrDefaultAsync<int> connection sql ["a" => 1; "b" => 2]
                 |> Async.RunSynchronously |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``querySingleOrDefaultTask with 2 rows throws exception`` () =
+        (fun () ->
+            let sql = """
+                select @a
+                union
+                select @b
+            """
+            (querySingleOrDefaultTask<int> connection sql ["a" => 1; "b" => 2]).Result
+                |> ignore
         ) |> shouldFail
 
     [<Fact>]
@@ -348,6 +492,27 @@ module Tests
             |> should equal (Some 1)
 
     [<Fact>]
+    let ``queryFirstMaybeTask with no results returns None`` () =
+        (queryFirstMaybeTask<int> connection "select null limit 0" []).Result
+            |> should equal None
+
+    [<Fact>]
+    let ``queryFirstMaybeTask with 1 row returns Some value`` () =
+        (queryFirstMaybeTask<int> connection "select @value" ["value" => 1]).Result
+            |> should equal (Some 1)
+
+    [<Fact>]
+    let ``queryFirstMaybeTask with 2 rows returns first Some value`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        (queryFirstMaybeTask<int> connection sql ["a" => 1; "b" => 2]).Result
+            |> should equal (Some 1)
+
+    [<Fact>]
     let ``querySingleMaybe with no results returns None`` () =
         querySingleMaybe<int> connection "select null limit 0" []
             |> should equal None
@@ -392,6 +557,29 @@ module Tests
         (fun () ->
             querySingleMaybeAsync<int> connection sql ["a" => 1; "b" => 2]
             |> Async.RunSynchronously
+            |> ignore
+        ) |> shouldFail
+
+    [<Fact>]
+    let ``querySingleMaybeTask with no results returns None`` () =
+        (querySingleMaybeTask<int> connection "select null limit 0" []).Result
+            |> should equal None
+
+    [<Fact>]
+    let ``querySingleMaybeTask with 1 row returns Some value`` () =
+        (querySingleMaybeTask<int> connection "select @value" ["value" => 1]).Result
+            |> should equal (Some 1)
+
+    [<Fact>]
+    let ``querySingleMaybeTask with 2 rows throws exception`` () =
+        let sql = """
+            select @a as x
+            union
+            select @b as x
+            order by x
+        """
+        (fun () ->
+            (querySingleMaybeTask<int> connection sql ["a" => 1; "b" => 2]).Result
             |> ignore
         ) |> shouldFail
 

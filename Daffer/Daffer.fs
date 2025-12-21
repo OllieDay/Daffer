@@ -76,11 +76,18 @@ namespace Daffer
                     |> Async.AwaitTask
             }
 
+        let private runTask<'T> sql parameters (runner : Arguments -> Task<'T>) build =
+            toArguments sql parameters build
+                |> runner
+
         let execute (connection : IDbConnection) sql parameters =
-            run sql parameters connection.Execute 
+            run sql parameters connection.Execute
 
         let executeAsync (connection : IDbConnection) sql parameters =
-            runAsync sql parameters connection.ExecuteAsync 
+            runAsync sql parameters connection.ExecuteAsync
+
+        let executeTask (connection : IDbConnection) sql parameters =
+            runTask sql parameters connection.ExecuteAsync
 
         let executeReader (connection : IDbConnection) sql parameters =
             run sql parameters connection.ExecuteReader
@@ -88,11 +95,17 @@ namespace Daffer
         let executeReaderAsync (connection : IDbConnection) sql parameters =
             runAsync sql parameters connection.ExecuteReaderAsync
 
+        let executeReaderTask (connection : IDbConnection) sql parameters =
+            runTask sql parameters connection.ExecuteReaderAsync
+
         let executeScalar<'T> (connection : IDbConnection) sql parameters =
             run sql parameters connection.ExecuteScalar<'T>
 
         let executeScalarAsync<'T> (connection : IDbConnection) sql parameters =
             runAsync sql parameters connection.ExecuteScalarAsync<'T>
+
+        let executeScalarTask<'T> (connection : IDbConnection) sql parameters =
+            runTask sql parameters connection.ExecuteScalarAsync<'T>
 
         let query<'T> (connection : IDbConnection) sql parameters build =
             toQueryArguments sql parameters build
@@ -105,11 +118,20 @@ namespace Daffer
                 return List.ofSeq result
             }
 
+        let queryTask<'T> (connection : IDbConnection) sql parameters build =
+            task {
+                let! result = runTask sql parameters connection.QueryAsync<'T> build
+                return List.ofSeq result
+            }
+
         let queryFirst<'T> (connection : IDbConnection) sql parameters =
             run sql parameters connection.QueryFirst<'T>
 
         let queryFirstAsync<'T> (connection : IDbConnection) sql parameters =
             runAsync sql parameters connection.QueryFirstAsync<'T>
+
+        let queryFirstTask<'T> (connection : IDbConnection) sql parameters =
+            runTask sql parameters connection.QueryFirstAsync<'T>
 
         let queryFirstOrDefault<'T> (connection : IDbConnection) sql parameters =
             run sql parameters connection.QueryFirstOrDefault<'T>
@@ -117,11 +139,17 @@ namespace Daffer
         let queryFirstOrDefaultAsync<'T> (connection : IDbConnection) sql parameters =
             runAsync sql parameters connection.QueryFirstOrDefaultAsync<'T>
 
+        let queryFirstOrDefaultTask<'T> (connection : IDbConnection) sql parameters =
+            runTask sql parameters connection.QueryFirstOrDefaultAsync<'T>
+
         let queryMultiple (connection : IDbConnection) sql parameters =
             run sql parameters connection.QueryMultiple
 
         let queryMultipleAsync (connection : IDbConnection) sql parameters =
             runAsync sql parameters connection.QueryMultipleAsync
+
+        let queryMultipleTask (connection : IDbConnection) sql parameters =
+            runTask sql parameters connection.QueryMultipleAsync
 
         let querySingle<'T> (connection : IDbConnection) sql parameters =
             run sql parameters connection.QuerySingle<'T>
@@ -129,11 +157,17 @@ namespace Daffer
         let querySingleAsync<'T> (connection : IDbConnection) sql parameters =
             runAsync sql parameters connection.QuerySingleAsync<'T>
 
+        let querySingleTask<'T> (connection : IDbConnection) sql parameters =
+            runTask sql parameters connection.QuerySingleAsync<'T>
+
         let querySingleOrDefault<'T> (connection : IDbConnection) sql parameters =
             run sql parameters connection.QuerySingleOrDefault<'T>
 
         let querySingleOrDefaultAsync<'T> (connection : IDbConnection) sql parameters =
             runAsync sql parameters connection.QuerySingleOrDefaultAsync<'T>
+
+        let querySingleOrDefaultTask<'T> (connection : IDbConnection) sql parameters =
+            runTask sql parameters connection.QuerySingleOrDefaultAsync<'T>
 
         let private firstMaybe = function
             | [] -> None
@@ -148,6 +182,12 @@ namespace Daffer
                 return result |> firstMaybe
             }
 
+        let queryFirstMaybeTask<'T> connection sql parameters build =
+            task {
+                let! result = queryTask<'T> connection sql parameters build
+                return result |> firstMaybe
+            }
+
         let private singleMaybe = function
             | [] -> None
             | [x] -> Some x
@@ -159,6 +199,12 @@ namespace Daffer
         let querySingleMaybeAsync<'T> (connection : IDbConnection) sql parameters build =
             async {
                 let! result = queryAsync<'T> connection sql parameters build
+                return result |> singleMaybe
+            }
+
+        let querySingleMaybeTask<'T> (connection : IDbConnection) sql parameters build =
+            task {
+                let! result = queryTask<'T> connection sql parameters build
                 return result |> singleMaybe
             }
 
@@ -201,6 +247,9 @@ namespace Daffer
                 return! Builder.create () |> Builder.executeAsync connection sql parameters
             }
 
+        let executeTask connection sql parameters =
+            Builder.create () |> Builder.executeTask connection sql parameters
+
         let executeReader connection sql parameters =
             Builder.create () |> Builder.executeReader connection sql parameters
 
@@ -208,6 +257,9 @@ namespace Daffer
             async {
                 return! Builder.create () |> Builder.executeReaderAsync connection sql parameters
             }
+
+        let executeReaderTask connection sql parameters =
+            Builder.create () |> Builder.executeReaderTask connection sql parameters
 
         let executeScalar<'T> connection sql parameters =
             Builder.create () |> Builder.executeScalar<'T> connection sql parameters
@@ -217,6 +269,9 @@ namespace Daffer
                 return! Builder.create () |> Builder.executeScalarAsync<'T> connection sql parameters
             }
 
+        let executeScalarTask<'T> connection sql parameters =
+            Builder.create () |> Builder.executeScalarTask<'T> connection sql parameters
+
         let query<'T> connection sql parameters =
             Builder.create () |> Builder.query<'T> connection sql parameters
 
@@ -224,6 +279,9 @@ namespace Daffer
             async {
                 return! Builder.create () |> Builder.queryAsync<'T> connection sql parameters
             }
+
+        let queryTask<'T> connection sql parameters =
+            Builder.create () |> Builder.queryTask<'T> connection sql parameters
 
         let queryFirst<'T> connection sql parameters =
             Builder.create () |> Builder.queryFirst<'T> connection sql parameters
@@ -233,6 +291,9 @@ namespace Daffer
                 return! Builder.create () |> Builder.queryFirstAsync<'T> connection sql parameters
             }
 
+        let queryFirstTask<'T> connection sql parameters =
+            Builder.create () |> Builder.queryFirstTask<'T> connection sql parameters
+
         let queryFirstOrDefault<'T> connection sql parameters =
             Builder.create () |> Builder.queryFirstOrDefault<'T> connection sql parameters
 
@@ -240,6 +301,9 @@ namespace Daffer
             async {
                 return! Builder.create () |> Builder.queryFirstOrDefaultAsync<'T> connection sql parameters
             }
+
+        let queryFirstOrDefaultTask<'T> connection sql parameters =
+            Builder.create () |> Builder.queryFirstOrDefaultTask<'T> connection sql parameters
 
         let queryMultiple connection sql parameters =
             Builder.create () |> Builder.queryMultiple connection sql parameters
@@ -249,6 +313,9 @@ namespace Daffer
                 return! Builder.create () |> Builder.queryMultipleAsync connection sql parameters
             }
 
+        let queryMultipleTask connection sql parameters =
+            Builder.create () |> Builder.queryMultipleTask connection sql parameters
+
         let querySingle<'T> connection sql parameters =
             Builder.create () |> Builder.querySingle<'T> connection sql parameters
 
@@ -256,6 +323,9 @@ namespace Daffer
             async {
                 return! Builder.create () |> Builder.querySingleAsync<'T> connection sql parameters
             }
+
+        let querySingleTask<'T> connection sql parameters =
+            Builder.create () |> Builder.querySingleTask<'T> connection sql parameters
 
         let querySingleOrDefault<'T> connection sql parameters =
             Builder.create () |> Builder.querySingleOrDefault<'T> connection sql parameters
@@ -265,6 +335,9 @@ namespace Daffer
                 return! Builder.create () |> Builder.querySingleOrDefaultAsync<'T> connection sql parameters
             }
 
+        let querySingleOrDefaultTask<'T> connection sql parameters =
+            Builder.create () |> Builder.querySingleOrDefaultTask<'T> connection sql parameters
+
         let queryFirstMaybe<'T> connection sql parameters =
             Builder.create () |> Builder.queryFirstMaybe<'T> connection sql parameters
 
@@ -273,6 +346,9 @@ namespace Daffer
                 return! Builder.create () |> Builder.queryFirstMaybeAsync<'T> connection sql parameters
             }
 
+        let queryFirstMaybeTask<'T> connection sql parameters =
+            Builder.create () |> Builder.queryFirstMaybeTask<'T> connection sql parameters
+
         let querySingleMaybe<'T> connection sql parameters =
             Builder.create () |> Builder.querySingleMaybe<'T> connection sql parameters
 
@@ -280,3 +356,6 @@ namespace Daffer
             async {
                 return! Builder.create () |> Builder.querySingleMaybeAsync<'T> connection sql parameters
             }
+
+        let querySingleMaybeTask<'T> connection sql parameters =
+            Builder.create () |> Builder.querySingleMaybeTask<'T> connection sql parameters

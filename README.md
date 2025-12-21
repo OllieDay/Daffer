@@ -39,8 +39,10 @@ Functions returning `null` have a counterpart that returns `'T option` instead.
 | --------------------------------|---------------------------- |
 | `queryFirstOrDefault<'T>`       | `queryFirstMaybe<'T>`       |
 | `queryFirstOrDefaultAsync<'T>`  | `queryFirstMaybeAsync<'T>`  |
+| `queryFirstOrDefaultTask<'T>`   | `queryFirstMaybeTask<'T>`   |
 | `querySingleOrDefault<'T>`      | `querySingleMaybe<'T>`      |
 | `querySingleOrDefaultAsync<'T>` | `querySingleMaybeAsync<'T>` |
+| `querySingleOrDefaultTask<'T>`  | `querySingleMaybeTask<'T>`  |
 
 ### Converting primitives to and from `'T option`
 
@@ -96,26 +98,37 @@ addOptionHandlers             : unit -> unit
 
 execute                       : IDbConnection -> string -> Parameter list -> int
 executeAsync                  : IDbConnection -> string -> Parameter list -> Async<int>
+executeTask                   : IDbConnection -> string -> Parameter list -> Task<int>
 executeReader                 : IDbConnection -> string -> Parameter list -> IDataReader
 executeReaderAsync            : IDbConnection -> string -> Parameter list -> Async<IDataReader>
+executeReaderTask             : IDbConnection -> string -> Parameter list -> Task<IDataReader>
 executeScalar<'T>             : IDbConnection -> string -> Parameter list -> 'T
 executeScalarAsync<'T>        : IDbConnection -> string -> Parameter list -> Async<'T>
+executeScalarTask<'T>         : IDbConnection -> string -> Parameter list -> Task<'T>
 query<'T>                     : IDbConnection -> string -> Parameter list -> 'T list
 queryAsync<'T>                : IDbConnection -> string -> Parameter list -> Async<'T list>
+queryTask<'T>                 : IDbConnection -> string -> Parameter list -> Task<'T list>
 queryFirst<'T>                : IDbConnection -> string -> Parameter list -> 'T
 queryFirstAsync<'T>           : IDbConnection -> string -> Parameter list -> Async<'T>
+queryFirstTask<'T>            : IDbConnection -> string -> Parameter list -> Task<'T>
 queryFirstOrDefault<'T>       : IDbConnection -> string -> Parameter list -> 'T
 queryFirstOrDefaultAsync<'T>  : IDbConnection -> string -> Parameter list -> Async<'T>
+queryFirstOrDefaultTask<'T>   : IDbConnection -> string -> Parameter list -> Task<'T>
 queryMultiple                 : IDbConnection -> string -> Parameter list -> SqlMapper.GridReader
 queryMultipleAsync            : IDbConnection -> string -> Parameter list -> Async<SqlMapper.GridReader>
+queryMultipleTask             : IDbConnection -> string -> Parameter list -> Task<SqlMapper.GridReader>
 querySingle<'T>               : IDbConnection -> string -> Parameter list -> 'T
 querySingleAsync<'T>          : IDbConnection -> string -> Parameter list -> Async<'T>
+querySingleTask<'T>           : IDbConnection -> string -> Parameter list -> Task<'T>
 querySingleOrDefault<'T>      : IDbConnection -> string -> Parameter list -> 'T
 querySingleOrDefaultAsync<'T> : IDbConnection -> string -> Parameter list -> Async<'T>
+querySingleOrDefaultTask<'T>  : IDbConnection -> string -> Parameter list -> Task<'T>
 queryFirstMaybe<'T>           : IDbConnection -> string -> Parameter list -> 'T option
 queryFirstMaybeAsync<'T>      : IDbConnection -> string -> Parameter list -> Async<'T option>
+queryFirstMaybeTask<'T>       : IDbConnection -> string -> Parameter list -> Task<'T option>
 querySingleMaybe<'T>          : IDbConnection -> string -> Parameter list -> 'T option
 querySingleMaybeAsync<'T>     : IDbConnection -> string -> Parameter list -> Async<'T option>
+querySingleMaybeTask<'T>      : IDbConnection -> string -> Parameter list -> Task<'T option>
 ```
 
 ## Builder definitions
@@ -137,24 +150,35 @@ addBuffered                   : bool -> Build -> Build
 
 execute                       : IDbConnection -> string -> Parameter list -> Build -> int
 executeAsync                  : IDbConnection -> string -> Parameter list -> Build -> Async<int>
+executeTask                   : IDbConnection -> string -> Parameter list -> Build -> Task<i nt>
 executeReader                 : IDbConnection -> string -> Parameter list -> Build -> IDataReader
 executeReaderAsync            : IDbConnection -> string -> Parameter list -> Build -> Async<IDataReader>
+executeReaderTask             : IDbConnection -> string -> Parameter list -> Build -> Task<IDataReader>
 executeScalar<'T>             : IDbConnection -> string -> Parameter list -> Build -> 'T
 executeScalarAsync<'T>        : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+executeScalarTask<'T>         : IDbConnection -> string -> Parameter list -> Build -> Task<'T>
 query<'T>                     : IDbConnection -> string -> Parameter list -> Build -> 'T list
 queryAsync<'T>                : IDbConnection -> string -> Parameter list -> Build -> Async<'T list>
+queryTask<'T>                 : IDbConnection -> string -> Parameter list -> Build -> Task<'T list>
 queryFirst<'T>                : IDbConnection -> string -> Parameter list -> Build -> 'T
 queryFirstAsync<'T>           : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+queryFirstTask<'T>            : IDbConnection -> string -> Parameter list -> Build -> Task<'T>
 queryFirstOrDefault<'T>       : IDbConnection -> string -> Parameter list -> Build -> 'T
 queryFirstOrDefaultAsync<'T>  : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+queryFirstOrDefaultTask<'T>   : IDbConnection -> string -> Parameter list -> Build -> Task<'T>
 queryMultiple                 : IDbConnection -> string -> Parameter list -> Build -> SqlMapper.GridReader
 queryMultipleAsync            : IDbConnection -> string -> Parameter list -> Build -> Async<SqlMapper.GridReader>
+queryMultipleTask             : IDbConnection -> string -> Parameter list -> Build -> Task<SqlMapper.GridReader>
 querySingle<'T>               : IDbConnection -> string -> Parameter list -> Build -> 'T
 querySingleAsync<'T>          : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+querySingleTask<'T>           : IDbConnection -> string -> Parameter list -> Build -> Task<'T>
 querySingleOrDefault<'T>      : IDbConnection -> string -> Parameter list -> Build -> 'T
 querySingleOrDefaultAsync<'T> : IDbConnection -> string -> Parameter list -> Build -> Async<'T>
+querySingleOrDefaultTask<'T>  : IDbConnection -> string -> Parameter list -> Build -> Task<'T>
 queryFirstMaybe<'T>           : IDbConnection -> string -> Parameter list -> Build -> 'T option
 queryFirstMaybeAsync<'T>      : IDbConnection -> string -> Parameter list -> Build -> Async<'T option>
+queryFirstMaybeTask<'T>       : IDbConnection -> string -> Parameter list -> Build -> Task<'T o ption>
 querySingleMaybe<'T>          : IDbConnection -> string -> Parameter list -> Build -> 'T option
 querySingleMaybeAsync<'T>     : IDbConnection -> string -> Parameter list -> Build -> Async<'T option>
+querySingleMaybeTask<'T>      : IDbConnection -> string -> Parameter list -> Build -> Task<'T option>
 ```
