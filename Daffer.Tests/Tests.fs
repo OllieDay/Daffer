@@ -10,7 +10,7 @@ module Tests
 
     [<Fact>]
     let ``execute with no rows affected returns -1`` () =
-        execute connection "" []
+        execute connection ";" []
             |> should equal -1
 
     [<Fact>]
@@ -30,7 +30,7 @@ module Tests
 
     [<Fact>]
     let ``executeAsync with no rows affected returns -1`` () =
-        executeAsync connection "" []
+        executeAsync connection ";" []
             |> Async.RunSynchronously
             |> should equal -1
 
@@ -52,7 +52,7 @@ module Tests
 
     [<Fact>]
     let ``executeTask with no rows affected returns -1`` () =
-        (executeTask connection "" []).Result
+        (executeTask connection ";" []).Result
             |> should equal -1
 
     [<Fact>]
