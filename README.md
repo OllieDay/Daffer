@@ -5,7 +5,7 @@ Functional wrapper for Dapper.
 - Provides a set of F# friendly functions for Dapper
 - Makes passing parameters less noisy using `["name" => value]`
 - Converts `IEnumerable<'T>` to `'T list`
-- Converts `Task<'T>` to `Async<'T>`
+- Includes `Task<'T>` and `Async<'T>` returning functions
 - Provides alternatives to `QueryFirstOrDefault<'T>` and `QuerySingleOrDefault<'T>` that returns `'T option`
 - Handles conversion of primitives to and from `'T option`
 
